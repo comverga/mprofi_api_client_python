@@ -28,6 +28,8 @@ class MprofiAPIConnector(object):
 
     #: Name of bulk send endpoint
     sendbulk_endpoint = 'sendbulk'
+
+    #: Name of status endpoint
     status_endpoint = 'status'
 
     def __init__(self, api_token=None, payload=None):
@@ -70,10 +72,10 @@ class MprofiAPIConnector(object):
         This method will use different endpoints of api (send or sendbulk)
         depending on the size of payload. When sending only one message -
         `send` api endpoint will be used, when sending multiple messages -
-        it will use `sendbuld` endpoint.
+        it will use `sendbulk` endpoint.
 
         :raises: ValueError
-        :returns: None
+        :returns: JSON string with updated status data
 
         """
 
@@ -119,15 +121,22 @@ class MprofiAPIConnector(object):
         self.payload = []
 
         for sent_message, response_message in zip(
-                    self.response,
-                    extract_from_response(response_json)
+                self.response,
+                extract_from_response(response_json)
         ):
             sent_message.update(response_message)
 
         return response_json
 
     def get_status(self):
+        """Check status of messages existing in payload.
 
+        This method grabs message id from each message in payload and calls
+        to API to check message status.
+
+        :returns: JSON string with updated status data
+
+        """
         status_full_url = '/'.join([
             self.url_base,
             self.api_version,
