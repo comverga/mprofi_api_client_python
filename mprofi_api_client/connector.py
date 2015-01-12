@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+"""Module with connector managing communication with Mprofi API."""
+
 import os
 import json
 
@@ -7,9 +9,24 @@ from .packages.requests import Session
 
 class MprofiAPIConnector(object):
 
+    """Connector class that manages communication  with mprofi public API.
+
+    :param api_token: Optional, explicit api token, as string. If api_token
+        is not specified `MPROFI_API_TOKEN` env variable will be used.
+    :param payload: Optional initial payload (list of dicts).
+
+    """
+
+    #: Base URL for public API
     url_base = 'http://api.mprofi.pl'
+
+    #: Version of API stored as string (used to merge with url_base)
     api_version = '1.0'
+
+    #: Name of send endpoint
     send_endpoint = 'send'
+
+    #: Name of bulk send endpoint
     sendbulk_endpoint = 'sendbulk'
 
     def __init__(self, api_token=None, payload=None):
@@ -21,6 +38,16 @@ class MprofiAPIConnector(object):
         self.payload = payload or []
 
     def add_message(self, recipient, message):
+        """Add one message to current payload.
+
+        :param recipient: Message recipient as string. This should be telephone
+            number like `123 123 123`.
+        :param message: Message content as string.
+
+        :raises: ValueError
+        :returns: None
+
+        """
 
         if not recipient:
             raise ValueError("`recipient` can't be empty.")
@@ -33,6 +60,20 @@ class MprofiAPIConnector(object):
         })
 
     def send(self, reference=None):
+        """Send message or messages stored in payload.
+
+        :param reference: Optional string that will be stored in mprofi to
+            mark messages from this batch.
+
+        This method will use different endpoints of api (send or sendbulk)
+        depending on the size of payload. When sending only one message -
+        `send` api endpoint will be used, when sending multiple messages -
+        it will use `sendbuld` endpoint.
+
+        :raises: ValueError
+        :returns: None
+
+        """
 
         if len(self.payload) == 1:
             used_endpoint = self.send_endpoint
