@@ -2,9 +2,14 @@
 """Module with connector managing communication with Mprofi API."""
 
 import os
-import json
 
 from .packages.requests import Session
+from .packages.requests.compat import json
+from .packages.requests.exceptions import ConnectionError
+
+
+class MprofiConnectionError(Exception):
+    pass
 
 
 class MprofiAPIConnector(object):
@@ -124,7 +129,7 @@ class MprofiAPIConnector(object):
         `send` api endpoint will be used, when sending multiple messages -
         it will use `sendbulk` endpoint.
 
-        :raises: ValueError
+        :raises: ValueError, MprofiConnectionError
         :returns: JSON string with updated status data
 
         """
@@ -160,13 +165,26 @@ class MprofiAPIConnector(object):
 
         encoded_payload = json.dumps(full_payload)
 
-        response = self.session.post(
-            full_url,
-            json=encoded_payload,
-            verify=True
-        )
+        try:
+            response = self.session.post(
+                full_url,
+                json=encoded_payload,
+                verify=True
+            )
+        except ConnectionError:
+            raise MprofiConnectionError(
+                "Can't reach %s, please check internet"
+                " connection." % self.url_base
+            )
 
-        response_json = response.json()
+        try:
+            response_json = response.json()
+        except json.JSONDecodeError:
+            raise MprofiConnectionError(
+                "Can't reach %s, please check internet"
+                " connection." % self.url_base
+            )
+
         self.response = self.payload
         self.payload = []
 
@@ -184,6 +202,7 @@ class MprofiAPIConnector(object):
         This method grabs message id from each message in payload and calls
         to API to check message status.
 
+        :raises: MprofiConnectionError
         :returns: JSON string with updated status data
 
         """
@@ -196,12 +215,24 @@ class MprofiAPIConnector(object):
         for sent_message in self.response:
             message_id = sent_message['id']
 
-            response = self.session.get(
-                status_full_url,
-                params={'id': message_id},
-                verify=True
-            )
+            try:
+                response = self.session.get(
+                    status_full_url,
+                    params={'id': message_id},
+                    verify=True
+                )
+            except ConnectionError:
+                raise MprofiConnectionError(
+                    "Can't reach %s, please check internet"
+                    " connection." % self.url_base
+                )
 
-            sent_message.update(response.json())
+            try:
+                sent_message.update(response.json())
+            except json.JSONDecodeError:
+                raise MprofiConnectionError(
+                    "Can't reach %s, please check internet"
+                    " connection." % self.url_base
+                )
 
         return self.response
