@@ -15,6 +15,56 @@ class MprofiAPIConnector(object):
         is not specified `MPROFI_API_TOKEN` env variable will be used.
     :param payload: Optional initial payload (list of dicts).
 
+    :Example:
+
+    >>> connector = MprofiAPIConnector(api_token="token from mprofi.pl website")
+    >>> connector.add_message('111222333', 'Welcome!')
+    >>> connector.send()
+    ... {u'id': 1}  # This will be a dict with message id
+
+    Sending multiple messages will change `send()` results
+
+    >>> connector = MprofiAPIConnector(api_token="token from mprofi.pl website")
+    >>> connector.add_message('111222333', 'Welcome!')
+    >>> connector.add_message('111222333', 'Welcome!')
+    >>> connector.send()
+    ... {u'result': [{u'id': 2}, {u'id': 3}]}  # a dict with results in a list
+    >>> # now `response` property has all added messages with ids
+    >>> connector.response
+    ... [
+    ...     {
+    ...         u'id': 2,
+    ...         'message': 'Hello!',
+    ...         'recipient': '123123123'
+    ...     },
+    ...     {
+    ...         u'id': 3,
+    ...         'message': 'Hello!',
+    ...         'recipient': '123123123'
+    ...     }
+    ... ]
+    >>> # you can also grab current status of messages you've sent
+    >>> connector.get_status()
+    ... [
+    ...     {
+    ...         u'id': 2,
+    ...         'message': 'Hello!',
+    ...         'recipient': '123123123',
+    ...         u'reference': u'2015-02-05',  # you can set own reference
+    ...                                       # string as `send()` argument
+    ...         u'status': u'WAITING_TO_PROCESS',
+    ...         u'ts': None
+    ...     },
+    ...     {
+    ...         u'id': 3,
+    ...         'message': 'Hello!',
+    ...         'recipient': '123123123',
+    ...         u'reference': u'2015-02-05',
+    ...         u'status': u'WAITING_TO_PROCESS',
+    ...         u'ts': None
+    ...     }
+    ... ]
+
     """
 
     #: Base URL for public API
