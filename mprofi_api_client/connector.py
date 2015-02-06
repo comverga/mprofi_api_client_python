@@ -5,10 +5,18 @@ import os
 
 from .packages.requests import Session
 from .packages.requests.compat import json
-from .packages.requests.exceptions import ConnectionError
+from .packages.requests.exceptions import ConnectionError, HTTPError
 
 
 class MprofiConnectionError(Exception):
+    pass
+
+
+class MprofiAuthError(Exception):
+    pass
+
+
+class MprofiNotFoundError(Exception):
     pass
 
 
@@ -53,8 +61,6 @@ class MprofiAPIConnector(object):
     ... [
     ...     {
     ...         u'id': 2,
-    ...         'message': 'Hello!',
-    ...         'recipient': '123123123',
     ...         u'reference': u'2015-02-05',  # you can set own reference
     ...                                       # string as `send()` argument
     ...         u'status': u'WAITING_TO_PROCESS',
@@ -62,10 +68,25 @@ class MprofiAPIConnector(object):
     ...     },
     ...     {
     ...         u'id': 3,
-    ...         'message': 'Hello!',
-    ...         'recipient': '123123123',
     ...         u'reference': u'2015-02-05',
     ...         u'status': u'WAITING_TO_PROCESS',
+    ...         u'ts': None
+    ...     }
+    ... ]
+    >>> # or you can request status of specified message ids
+    >>> connector.get_status(requested_ids=['1', '2'])
+    ... [
+    ...     {
+    ...         u'id': 1,
+    ...         u'reference': u'2015-02-05',  # you can set own reference
+    ...                                       # string as `send()` argument
+    ...         u'status': u'ERROR',
+    ...         u'ts': None
+    ...     },
+    ...     {
+    ...         u'id': 2,
+    ...         u'reference': u'2015-02-05',
+    ...         u'status': u'PROCESSING',
     ...         u'ts': None
     ...     }
     ... ]
@@ -129,7 +150,7 @@ class MprofiAPIConnector(object):
         `send` api endpoint will be used, when sending multiple messages -
         it will use `sendbulk` endpoint.
 
-        :raises: ValueError, MprofiConnectionError
+        :raises: ValueError, MprofiConnectionError, MprofiAuthError
         :returns: JSON string with updated status data
 
         """
@@ -171,10 +192,16 @@ class MprofiAPIConnector(object):
                 json=encoded_payload,
                 verify=True
             )
+            response.raise_for_status()
         except ConnectionError:
             raise MprofiConnectionError(
                 "Can't reach %s, please check internet"
                 " connection." % self.url_base
+            )
+        except HTTPError:
+            raise MprofiAuthError(
+                "Calling %s resulted in an error. "
+                "Did you set proper, active, token?" % self.url_base
             )
 
         try:
@@ -196,13 +223,18 @@ class MprofiAPIConnector(object):
 
         return response_json
 
-    def get_status(self):
-        """Check status of messages existing in payload.
+    def get_status(self, requested_ids=None):
+        """Check status of messages existing in payload or with given ids.
 
-        This method grabs message id from each message in payload and calls
-        to API to check message status.
+        If you don't supply `requested_ids` this method will grab message id
+        from each message in payload and call to API to check message status.
+        When list of `requested_ids` is given, method will check message status
+        of messages with requested ids.
 
-        :raises: MprofiConnectionError
+        :param requested_ids: Optional list of requested message ids (if you
+            don't want to check for last send messages).
+
+        :raises: MprofiConnectionError, MprofiNotFoundError, MprofiAuthError
         :returns: JSON string with updated status data
 
         """
@@ -212,8 +244,12 @@ class MprofiAPIConnector(object):
             self.status_endpoint, ""
         ])
 
-        for sent_message in self.response:
-            message_id = sent_message['id']
+        collected_response = {}
+
+        if requested_ids is None:
+            requested_ids = [sent_msg['id'] for sent_msg in self.response]
+
+        for message_id in requested_ids:
 
             try:
                 response = self.session.get(
@@ -221,18 +257,29 @@ class MprofiAPIConnector(object):
                     params={'id': message_id},
                     verify=True
                 )
+                response.raise_for_status()
             except ConnectionError:
                 raise MprofiConnectionError(
                     "Can't reach %s, please check internet"
                     " connection." % self.url_base
                 )
+            except HTTPError:
+                if response.status_code != 404:
+                    raise MprofiAuthError(
+                        "Calling %s resulted in an error. "
+                        "Did you set proper, active, token?" % self.url_base
+                    )
+                else:
+                    raise MprofiNotFoundError(
+                        "We can't find a message with id %s" % message_id
+                    )
 
             try:
-                sent_message.update(response.json())
+                collected_response[message_id] = response.json()
             except json.JSONDecodeError:
                 raise MprofiConnectionError(
                     "Can't reach %s, please check internet"
                     " connection." % self.url_base
                 )
 
-        return self.response
+        return collected_response
