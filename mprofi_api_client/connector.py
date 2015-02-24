@@ -7,7 +7,7 @@ from .packages.requests import Session
 
 class MprofiAPIConnector(object):
 
-    url_base = 'http://api.mprofi.pl'
+    url_base = 'https://api.mprofi.pl'
     api_version = '1.0'
     send_endpoint = 'send'
     sendbulk_endpoint = 'sendbulk'
