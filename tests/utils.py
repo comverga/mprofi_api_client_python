@@ -1,3 +1,4 @@
+from mprofi_api_client.packages.requests.models import Response
 
 
 class FakeSession(object):
@@ -14,4 +15,7 @@ class FakeSession(object):
         self.url = url
         self.data = data
         self.json = json
-        return True
+        resp = Response()
+        resp.status_code = 200
+        resp._content = '{"id": 1, "result": [{"id": 1}]}'
+        return resp

@@ -4,7 +4,8 @@
    contain the root `toctree` directive.
 
 Welcome to Mprofi API Connector's documentation!
-======================================
+================================================
+
 
 Contents:
 
@@ -13,7 +14,7 @@ Contents:
 
    readme
    installation
-   usage
+   modules
    contributing
    authors
    history
