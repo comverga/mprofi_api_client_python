@@ -6,10 +6,10 @@ Mprofi API Connector
         :target: https://pypi.python.org/pypi/mprofi_api_client
 
 
-krotki opis
+Python Client library for mProfi REST API
 
-* Free software: BSD license
-* Documentation: https://mprofi_api_client.readthedocs.org.
+* Free software: Apache 2.0 license
+* Documentation: ...
 
 Features
 --------

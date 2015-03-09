@@ -5,7 +5,7 @@ Credits
 Development Lead
 ----------------
 
-* Materna Communications <biuro@materna.com.pl>
+* Materna Communications <pomoc@materna.com.pl>
 
 Contributors
 ------------
