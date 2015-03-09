@@ -31,9 +31,11 @@ setup(
     zip_safe=False,
     keywords=['mprofi', 'api', 'client'],
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
+        'Intended Audience :: System Administrators',
+        'Intended Audience :: Telecommunications Industry',
+        'License :: OSI Approved :: Apache Software License',
         'Natural Language :: English',
         "Programming Language :: Python :: 2",
         'Programming Language :: Python :: 2.7',
