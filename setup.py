@@ -14,7 +14,7 @@ history = open('HISTORY.rst').read().replace('.. :changelog:', '')
 
 setup(
     name='mprofi_api_client',
-    version='0.1.0',
+    version='0.1.1',
     description='Python Client library for mProfi REST API',
     long_description=readme + '\n\n' + history,
     author='Materna Communications Sp. z o.o.',
