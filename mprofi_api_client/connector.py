@@ -184,12 +184,10 @@ class MprofiAPIConnector(object):
             used_endpoint, ""
         ])
 
-        encoded_payload = json.dumps(full_payload)
-
         try:
             response = self.session.post(
                 full_url,
-                json=encoded_payload,
+                data=full_payload,
                 verify=True
             )
             response.raise_for_status()
